@@ -44,6 +44,9 @@ module overmind::streams {
     //==============================================================================================
     // Constants - Add your constants here (if any)
     //==============================================================================================
+
+    const MAX_DURATION_SECONDS: u64 = 31536000; // Maximum duration for a stream (1 year in seconds)
+    const DEFAULT_PAYMENT_AMOUNT: u64 = 100; // Default payment amount if not specified
     
     //==============================================================================================
     // Error codes - DO NOT MODIFY
@@ -186,9 +189,39 @@ module overmind::streams {
     // Helper functions - Add your helper functions here (if any)
     //==============================================================================================
 
+    fun calculate_amount_claimable<PaymentCoin>(
+        stream: &Stream<PaymentCoin>,
+        clock: &Clock
+    ) -> u64 {
+        let now = clock.now_seconds();
+        let elapsed_seconds = now - stream.last_timestamp_claimed_seconds;
+        (stream.amount.value() * elapsed_seconds) / stream.duration_in_seconds
+    }    
+
     //==============================================================================================
     // Validation functions - Add your validation functions here (if any)
     //==============================================================================================
+
+    fun validate_payment_amount(payment: u64) -> u64 {
+        if payment == 0 {
+            return EPaymentMustBeGreaterThanZero;
+        }
+        return 0; // No error
+    }
+
+    fun validate_duration(duration: u64) -> u64 {
+        if duration == 0 {
+            return EDurationMustBeGreaterThanZero;
+        }
+        return 0; // No error
+    }
+
+    fun validate_sender_receiver(sender: address, receiver: address) -> u64 {
+        if sender == receiver {
+            return ESenderCannotBeReceiver;
+        }
+        return 0; // No error
+    }
 
     //==============================================================================================
     // Tests - DO NOT MODIFY
